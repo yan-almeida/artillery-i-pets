@@ -1,28 +1,23 @@
 {
-  "name": "artilleryExamples",
+  "name": "artillery",
   "version": "1.0.0",
   "private": false,
   "scripts": {
-    "endurance:qa": "$(npm bin)/artillery run -e qa endurance-tests.yml -o endurance-tests.json ; $(npm bin)/artillery report endurance-tests.json",
-    "endurance:dev": "$(npm bin)/artillery run -e dev endurance-tests.yml -o endurance-tests.json ; $(npm bin)/artillery report endurance-tests.json",
-    "load:qa": "$(npm bin)/artillery run -e qa load-tests.yml -o load-tests.json ; $(npm bin)/artillery report load-tests.json",
-    "load:dev": "$(npm bin)/artillery run -e dev load-tests.yml -o load-tests.json ; $(npm bin)/artillery report load-tests.json",
-    "endurance:jenkins:qa": "$(npm bin)/artillery run -e qa endurance-tests.yml -o endurance-tests.json ; $(npm bin)/artillery report endurance-tests.json; cat endurance-tests.json.html"
+    "artillery:run": "artillery run load-tests.yaml"
   },
   "repository": {
-    "type": "git",
-    "url": "git+https://github.com/rafaelaazevedo/artilleryExamples.git"
+    "type": "git"
   },
-  "author": "Rafaela Azevedo",
+  "author": "Eureka Labs",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/rafaelaazevedo/artilleryExamples/issues"
-  },
+ 
   "devDependencies": {
-    "faker": "^4.1.0"
+    "faker": "5.5.3",
+    "yarn-check": "^0.0.3"
   },
   "dependencies": {
     "artillery": "^1.6.0-27",
-    "artillery-plugin-expect": "^1.2.0"
+    "artillery-plugin-expect": "^1.2.0",
+    "faker-br": "^0.4.1"
   }
 }

@@ -1,0 +1,98 @@
+config:
+  target: "https://api.ipatas-delivery.eurekahomolog.xyz"
+  processor: "helpers/pre-request.js"
+  phases:    
+    - duration: 30
+      arrivalRate: 1  
+scenarios:
+  - flow:
+      - function: "generateDeliveryRequest"
+      - post:
+          headers:
+            x-api-key: "59b0932d-2533-4f7c-9f36-0e2a5d101611"
+          url: "/delivery-request"
+   #       beforeRequest: "*** Create delivery request"
+          json: "{{ payload }}" 
+          expect:
+            - statusCode: 201
+          # afterResponse: "printStatus"  
+          capture:
+            json: "$"
+            as: "deliveryRequest"
+      - function: "generateRandomUser"
+      - post:
+          url: "/user"
+     #     beforeRequest: "*** Create User"
+          json: "{{ payload }}" 
+          expect:
+            - statusCode: 201
+          # afterResponse: "printStatus"  
+          capture:
+            json: "$.cpf"
+            as: "cpfCreatedUser"
+      - post:
+          url: "/auth/login"
+   #       beforeRequest: "*** Login"
+          json:
+            username: "{{ cpfCreatedUser }}"
+            password: "teste"
+          expect:
+            - statusCode: 200
+          # afterResponse: "printStatus"   
+          capture:
+            json: "$"
+            as: "loggedUser"
+      - patch:
+          headers:
+            Authorization: "Bearer {{ loggedUser.access_token }}"
+          url: "/user/{{ loggedUser.id }}"
+          json: 
+            latitude: "{{ deliveryRequest.receiverLat }}"
+            longitude: "{{ deliveryRequest.receiverLong }}"
+            available: true
+          expect:
+            - statusCode: 200
+          # afterResponse: "printStatus"  
+      - patch:
+          headers:
+            Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImZlYmQzNzRkLTYxNjItNDUzNy1iOGZhLThjY2Q3MjIyZTFkNCIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTYzNTM0Nzc0NiwiZXhwIjoxNjM1OTUyNTQ2fQ.-RMFhFYf1a4Jry1R3_aMTMPF3Xzq2_61X5M9wtDOOqk"
+          url: "/user/{{ loggedUser.id }}"
+   #       beforeRequest: "*** Update lat/long and available of user - and changes user status to APPROVED"
+          json: 
+            status: "APPROVED"
+          expect:
+            - statusCode: 200
+          # afterResponse: "printStatus" 
+      - think: 30 # 15 or 30s, which better?       
+      - get:
+          headers:
+            Authorization: "Bearer {{ loggedUser.access_token }}"
+          url: "/delivery-proposal?userId={{ loggedUser.id }}&deliveryRequestStatuses=AWAITING_TRANSPORTER&deliveryRequestStatuses=PENDING"
+     #     beforeRequest: "get delivery-proposal with logged user and delivery request statuses: PENDING, AWAITING_TRANSPORTER and IS_DELIVERING + update userAction to ACCEPTED"
+          capture:
+            json: "$.data"
+            as: "deliveryProposalLoggedUser"
+      - patch:
+          headers:
+            Authorization: "Bearer {{ loggedUser.access_token }}"
+          url: "/delivery-proposal/{{ deliveryProposalLoggedUser[0].id }}"
+          json: 
+            userAction: "ACCEPTED"
+      - patch:
+          headers:
+            x-api-key: "59b0932d-2533-4f7c-9f36-0e2a5d101611"
+          url: "/delivery-request/{{ deliveryProposalLoggedUser[0].deliveryRequest.id }}/external"
+      #    beforeRequest: "update delivery-request status with api-key + update delivery request status to FINALIZED"
+          json: 
+            status: "IS_DELIVERING"
+      - patch:
+          headers:
+            Authorization: "Bearer {{ loggedUser.access_token }}"
+          url: "/delivery-proposal/{{ deliveryProposalLoggedUser[0].id }}/external"
+          json: 
+            deliveryRequestStatus: "FINALIZED"
+
+  # intervalo pequeno e arrivalRate alto
+  # ao popular o banco, realizar o inverso
+
+  
